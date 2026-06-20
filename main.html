@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX to PDF 생성기</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-preview {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-preview:hover {
+            background-color: #2980b9;
+        }
+        .btn-download {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn-download:hover {
+            background-color: #27ae60;
+        }
+        /* PDF로 저장될 영역 */
+        #pdf-content {
+            background: white;
+            padding: 40px;
+            min-height: 200px;
+            border: 1px dashed #bdc3c7;
+            border-radius: 4px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>LaTeX to PDF 변환기</h1>
+
+    <div class="container">
+        <h3>1. LaTeX 텍스트 입력</h3>
+        <p style="font-size: 13px; color: #7f8c8d;">수식은 <code>$$ 수식 $$</code> (가운데 정렬) 또는 <code>\\( 수식 \\)</code> (인라인) 형태로 입력하세요.</p>
+        <textarea id="latex-input">
+슈뢰딩거 방정식(Schrödinger equation)은 다음과 같이 표현됩니다:
+
+$$ i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) = \left[ -\frac{\hbar^2}{2m}\nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t) $$
+
+여기서 \( \hbar \)는 디랙 상수입니다.
+        </textarea>
+        
+        <div class="button-group">
+            <button class="btn-preview" onclick="renderLaTeX()">미리보기 (렌더링)</button>
+            <button class="btn-download" onclick="downloadPDF()">PDF 다운로드</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>2. 미리보기 / PDF 출력 영역</h3>
+        <div id="pdf-content"></div>
+    </div>
+
+    <script>
+        // 1. 텍스트 영역의 LaTeX 코드를 HTML 영역으로 옮기고 MathJax로 렌더링하는 함수
+        function renderLaTeX() {
+            const input = document.getElementById('latex-input').value;
+            const outputArea = document.getElementById('pdf-content');
+            
+            // 입력받은 줄바꿈을 HTML <br> 태그로 변환하여 레이아웃 유지
+            outputArea.innerHTML = input.replace(/\n/g, '<br>');
+            
+            // MathJax를 호출하여 수식을 렌더링
+            if (window.MathJax) {
+                MathJax.typesetPromise([outputArea]).then(() => {
+                    console.log('LaTeX 렌더링 완료');
+                }).catch((err) => {
+                    console.error('MathJax 렌더링 에러:', err);
+                });
+            }
+        }
+
+        // 2. 렌더링된 영역을 PDF로 다운로드하는 함수
+        function downloadPDF() {
+            // 렌더링이 안 되어 있을 수 있으므로 다운로드 전 먼저 렌더링 실행
+            renderLaTeX(); 
+
+            // MathJax 렌더링은 비동기이므로 약간의 지연 후 PDF 변환을 실행 (수식이 깨지지 않도록)
+            setTimeout(() => {
+                const element = document.getElementById('pdf-content');
+                
+                // PDF 변환 옵션 설정
+                const opt = {
+                    margin:       15, // 여백 설정 (mm)
+                    filename:     'latex_document.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 }, // 해상도 높임
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // html2pdf 실행
+                html2pdf().set(opt).from(element).save();
+            }, 500); // 0.5초 대기 후 PDF 생성
+        }
+
+        // 페이지 로드 시 기본 입력값 렌더링
+        window.onload = () => {
+            renderLaTeX();
+        };
+    </script>
+</body>
+</html>
