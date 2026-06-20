@@ -32,7 +32,7 @@
         }
         textarea {
             width: 100%;
-            height: 150px;
+            height: 180px;
             padding: 10px;
             font-family: monospace;
             font-size: 14px;
@@ -70,7 +70,6 @@
         .btn-download:hover {
             background-color: #27ae60;
         }
-        /* PDF로 저장될 영역 */
         #pdf-content {
             background: white;
             padding: 40px;
@@ -89,13 +88,8 @@
     <div class="container">
         <h3>1. LaTeX 텍스트 입력</h3>
         <p style="font-size: 13px; color: #7f8c8d;">수식은 <code>$$ 수식 $$</code> (가운데 정렬) 또는 <code>\\( 수식 \\)</code> (인라인) 형태로 입력하세요.</p>
-        <textarea id="latex-input">
-슈뢰딩거 방정식(Schrödinger equation)은 다음과 같이 표현됩니다:
-
-$$ i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) = \left[ -\frac{\hbar^2}{2m}\nabla^2 + V(\mathbf{r},t) \right] \Psi(\mathbf{r},t) $$
-
-여기서 \( \hbar \)는 디랙 상수입니다.
-        </textarea>
+        
+        <textarea id="latex-input"></textarea>
         
         <div class="button-group">
             <button class="btn-preview" onclick="renderLaTeX()">미리보기 (렌더링)</button>
@@ -109,15 +103,20 @@ $$ i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) = \left[ -\frac{\hbar^2
     </div>
 
     <script>
-        // 1. 텍스트 영역의 LaTeX 코드를 HTML 영역으로 옮기고 MathJax로 렌더링하는 함수
+        // 초기 기본 예제 텍스트 정의
+        const defaultText = `슈뢰딩거 방정식(Schrödinger equation)은 다음과 같이 표현됩니다:
+
+$$ i\\hbar \\frac{\\partial}{\\partial t} \\Psi(\\mathbf{r},t) = \\left[ -\\frac{\\hbar^2}{2m}\\nabla^2 + V(\\mathbf{r},t) \\right] \\Psi(\\mathbf{r},t) $$
+
+여기서 \\( \\hbar \\)는 디랙 상수입니다.`;
+
+        // 1. LaTeX 렌더링 함수
         function renderLaTeX() {
             const input = document.getElementById('latex-input').value;
             const outputArea = document.getElementById('pdf-content');
             
-            // 입력받은 줄바꿈을 HTML <br> 태그로 변환하여 레이아웃 유지
             outputArea.innerHTML = input.replace(/\n/g, '<br>');
             
-            // MathJax를 호출하여 수식을 렌더링
             if (window.MathJax) {
                 MathJax.typesetPromise([outputArea]).then(() => {
                     console.log('LaTeX 렌더링 완료');
@@ -127,31 +126,26 @@ $$ i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r},t) = \left[ -\frac{\hbar^2
             }
         }
 
-        // 2. 렌더링된 영역을 PDF로 다운로드하는 함수
+        // 2. PDF 다운로드 함수
         function downloadPDF() {
-            // 렌더링이 안 되어 있을 수 있으므로 다운로드 전 먼저 렌더링 실행
             renderLaTeX(); 
 
-            // MathJax 렌더링은 비동기이므로 약간의 지연 후 PDF 변환을 실행 (수식이 깨지지 않도록)
             setTimeout(() => {
                 const element = document.getElementById('pdf-content');
-                
-                // PDF 변환 옵션 설정
                 const opt = {
-                    margin:       15, // 여백 설정 (mm)
+                    margin:       15,
                     filename:     'latex_document.pdf',
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2 }, // 해상도 높임
+                    html2canvas:  { scale: 2 },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
-
-                // html2pdf 실행
                 html2pdf().set(opt).from(element).save();
-            }, 500); // 0.5초 대기 후 PDF 생성
+            }, 500);
         }
 
-        // 페이지 로드 시 기본 입력값 렌더링
+        // 페이지 로드 시 초기값 주입 및 렌더링
         window.onload = () => {
+            document.getElementById('latex-input').value = defaultText;
             renderLaTeX();
         };
     </script>
